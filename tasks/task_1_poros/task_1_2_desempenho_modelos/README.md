@@ -47,7 +47,9 @@ Opções, formatos e interpretação: [`docs/GUIA_DE_USO.md`](../../../docs/GUIA
 
 `legacy/petrophysical_properties.py` define rocha como "qualquer canal > 5". Nestes
 patches muito escuros, **7–27 % dos pixels de cada patch têm todos os canais ≤ 5**
-(grãos escuros, não fundo). Eles saem da área de rocha e **inflam a porosidade**.
+(grãos escuros, não fundo; média de 12,3 %). Eles saem da área de rocha e **inflam a
+porosidade**: a porosidade do rockface sobe de 0,3 a 3,5 pontos percentuais por patch
+(ex.: `y38000_x22800`, 16,7 % → 20,2 %). Tabela: `results/task_1_2/exploracao_patches.csv`.
 
 ## Próximos passos
 
