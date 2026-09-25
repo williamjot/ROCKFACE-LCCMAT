@@ -1,0 +1,28 @@
+# Ambiente
+.venv/
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Dados (NÃO versionar — lâminas do projeto; ver data/README.md)
+data/**
+!data/README.md
+*.csv.gz
+atividades/**/cat_not_cat.csv
+
+# Kit de anotação: imagens derivadas das lâminas não sobem.
+# split.json e o README sobem; máscaras/rabiscos dos especialistas: ver annotations/README.md
+annotations/images/
+annotations/test_windows/
+annotations/test_masks/
+annotations/scribbles/*
+!annotations/scribbles/.gitkeep
+
+# Intermediários (amostras, probabilidades, sobreposições, mosaicos)
+cache/
+
+# Resultados: só tabelas e JSON sobem; arrays e imagens não
+results/**/*.npy
+results/**/*.npz
+results/**/*.jpg
+results/**/*.png

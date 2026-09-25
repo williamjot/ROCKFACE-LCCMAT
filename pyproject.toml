@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "laminas"
+version = "0.1.0"
+description = "Segmentação de poros e grãos em lâminas petrográficas (LCCMat-UnB, Equipe A)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "pillow",
+    "matplotlib",
+    "opencv-python-headless",
+    "scikit-image>=0.22",
+    "scikit-learn>=1.4",
+    "lightgbm>=4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
