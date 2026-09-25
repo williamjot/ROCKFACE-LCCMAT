@@ -1,0 +1,60 @@
+{
+  "mode": "piloto",
+  "scale": 0.5,
+  "folds": 6,
+  "seed": 42,
+  "label_sources": {
+    "y22800_x34200": "pseudo (rockface)",
+    "y22800_x38000": "pseudo (rockface)",
+    "y26600_x15200": "pseudo (rockface)",
+    "y26600_x19000": "pseudo (rockface)",
+    "y26600_x22800": "pseudo (rockface)",
+    "y26600_x26600": "pseudo (rockface)",
+    "y34200_x22800": "pseudo (rockface)",
+    "y34200_x26600": "pseudo (rockface)",
+    "y34200_x30400": "pseudo (rockface)",
+    "y34200_x34200": "pseudo (rockface)",
+    "y34200_x38000": "pseudo (rockface)",
+    "y38000_x15200": "pseudo (rockface)",
+    "y38000_x19000": "pseudo (rockface)",
+    "y38000_x22800": "pseudo (rockface)",
+    "y38000_x26600": "pseudo (rockface)",
+    "y38000_x30400": "pseudo (rockface)",
+    "y38000_x34200": "pseudo (rockface)",
+    "y38000_x38000": "pseudo (rockface)"
+  },
+  "rockface_rock_fraction": {
+    "y22800_x34200": 0.8341840720221607,
+    "y22800_x38000": 0.7966659972299169,
+    "y26600_x15200": 0.9192260387811635,
+    "y26600_x19000": 0.8952134349030471,
+    "y26600_x22800": 0.8897496537396122,
+    "y26600_x26600": 0.9042006925207756,
+    "y34200_x22800": 0.7349788088642659,
+    "y34200_x26600": 0.8495407894736842,
+    "y34200_x30400": 0.9018935595567867,
+    "y34200_x34200": 0.9275481301939058,
+    "y34200_x38000": 0.9036936288088643,
+    "y38000_x15200": 0.8699886426592798,
+    "y38000_x19000": 0.9211902354570637,
+    "y38000_x22800": 0.8273259695290859,
+    "y38000_x26600": 0.8873837257617728,
+    "y38000_x30400": 0.899167867036011,
+    "y38000_x34200": 0.902970083102493,
+    "y38000_x38000": 0.9230479916897507
+  },
+  "slide_color_stats": [
+    [
+      0.0,
+      1.0,
+      1.0
+    ],
+    [
+      83.0,
+      86.0,
+      101.0
+    ]
+  ],
+  "minutes": 40.4,
+  "nota": "Executado com a versão pré-refatoração do script (mesma lógica de 02_comparar_modelos.py); folds sorteados com seed 42."
+}

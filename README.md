@@ -17,7 +17,7 @@ será reaproveitado na segmentação de grãos, fluxo 2).
 | Task | Descrição | Estado | Pasta |
 |---|---|---|---|
 | 1.1 | Revisão de literatura de modelos de segmentação | ✅ concluída | [`tasks/task_1_poros/task_1_1_revisao_literatura`](tasks/task_1_poros/task_1_1_revisao_literatura) |
-| 1.2 | Desempenho dos modelos candidatos | 🔄 piloto rodando; aguardando anotações | [`tasks/task_1_poros/task_1_2_desempenho_modelos`](tasks/task_1_poros/task_1_2_desempenho_modelos) |
+| 1.2 | Desempenho dos modelos candidatos | 🔄 piloto concluído; aguardando anotações | [`tasks/task_1_poros/task_1_2_desempenho_modelos`](tasks/task_1_poros/task_1_2_desempenho_modelos) |
 | 1.3 | Escolha do(s) modelo(s) para aplicação em escala | ⏳ | [`tasks/task_1_poros/task_1_3_selecao_modelo`](tasks/task_1_poros/task_1_3_selecao_modelo) |
 | 1.4 | Documentação das decisões e paper | ⏳ | [`tasks/task_1_poros/task_1_4_documentacao_paper`](tasks/task_1_poros/task_1_4_documentacao_paper) |
 

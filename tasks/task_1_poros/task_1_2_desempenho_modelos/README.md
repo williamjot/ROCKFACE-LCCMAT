@@ -30,9 +30,13 @@ Opções, formatos e interpretação: [`docs/GUIA_DE_USO.md`](../../../docs/GUIA
 
 ## Estado atual
 
-- **Piloto** (pseudo-rótulos do rockface): pipeline completo validado; resultados em
-  `results/task_1_2/piloto_scale0.5/`. ⚠️ As métricas do piloto medem
-  **concordância com o rockface**, não acerto.
+- **Piloto concluído** (pseudo-rótulos do rockface, 18 patches, 6 folds, 40 min):
+  pipeline validado de ponta a ponta. ⚠️ As métricas medem **concordância com o
+  rockface**, não acerto. Análise: [`results/task_1_2/RESULTADOS_PILOTO.md`](../../../results/task_1_2/RESULTADOS_PILOTO.md).
+  - IoU com o rockface: RF-cor 0,970 · RF 0,937 · LightGBM 0,930.
+  - Porosidade quase igual entre métodos (≤ 0,3 p.p.); as diferenças ficam nas bordas
+    e em poros pequenos/difusos, onde o RF é mais conservador que o rockface.
+  - Atributos mais usados: b\* suavizado (quão azul é a vizinhança) e textura da saturação.
 - **Aguardando especialistas:** rabiscos nos 12 patches de treino e correção das 6
   janelas de teste (`annotations/`), e as decisões abaixo.
 
