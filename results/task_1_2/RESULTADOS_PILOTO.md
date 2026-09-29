@@ -7,14 +7,14 @@
 
 ## Configuração
 
-- 18 patches de uma lâmina, `--scale 0.5` (2048 × 2048), janela sem sobreposição.
+- 18 patches de uma lâmina, `--escala 0.5` (2048 × 2048), janela sem sobreposição.
 - Validação cruzada em 6 folds agrupados por patch (3 patches de teste por fold).
 - Treino: 20 mil px/classe/patch do miolo (erosão 6 px) das regiões do `rockface`;
   600 mil px por fold, balanceados.
 - Pós-processamento: τ = 0,5, abertura de raio 1 px.
 - Tempo total: 40 min (16 threads, sem GPU).
 
-Arquivos: [`piloto_scale0.5/`](piloto_scale0.5) — `metrics_per_patch.csv`,
+Arquivos: [`piloto_escala0.5/`](piloto_escala0.5) — `metrics_per_patch.csv`,
 `metrics_summary.csv`, `rf_feature_importance.csv`, `run_info.json`.
 
 ## Concordância com o `rockface` (média ± dp, 18 patches)
@@ -35,7 +35,7 @@ Arquivos: [`piloto_scale0.5/`](piloto_scale0.5) — `metrics_per_patch.csv`,
    patch). Nestes patches, o grosso da porosidade é o "miolo fácil" dos poros grandes,
    em que todos concordam — como previsto na Task 1.1 (Seção 4, item 1).
 3. **As diferenças estão nas bordas e nos poros pequenos/difusos.** O F1 de borda cai
-   para ~0,8 com o banco de filtros. Nas sobreposições (`cache/…/overlays`), quase toda
+   para ~0,8 com o banco de filtros. Nas figuras do `05_figuras.py`, quase toda
    a discordância é "só `rockface`" (ciano): bordas finas e manchas azuis difusas dentro
    de grãos (possível microporosidade), que o RF marca como sólido. O RF é **mais
    conservador**, o que é esperado: ele só viu exemplos do miolo das regiões.
@@ -52,5 +52,5 @@ Arquivos: [`piloto_scale0.5/`](piloto_scale0.5) — `metrics_per_patch.csv`,
 ## Próximo passo
 
 Rótulos dos especialistas (rabiscos nos 12 patches de treino + correção das 6 janelas
-de teste) → `02_comparar_modelos.py` em modo especialista. Ver
+de teste) → `02_extrair_amostras.py` e `04_avaliar_especialista.py`. Ver
 [`docs/GUIA_DE_USO.md`](../../docs/GUIA_DE_USO.md), seção 6.

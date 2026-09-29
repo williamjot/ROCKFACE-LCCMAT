@@ -34,7 +34,7 @@ sobretudo em bordas e microporosidade, a escolha é reavaliada na Task 1.3.
 
 | Prioridade | Candidato | Implementado em |
 |---|---|---|
-| 0 | Limiar HSV/Otsu (`rockface`) | `src/laminas/baseline.py` |
+| 0 | Limiar HSV/Otsu (`rockface`) | `laminas/baseline.py` |
 | 1 | RF pixel a pixel + banco de filtros | Task 1.2 |
 | 1 | LightGBM/XGBoost | Task 1.2 |
 | 2 | RF por superpixel (SLIC) | ⏳ |

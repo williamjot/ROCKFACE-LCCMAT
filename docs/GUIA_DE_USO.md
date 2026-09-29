@@ -1,22 +1,20 @@
 # Guia de uso — ROCKFACE-LCCMAT
 
-Guia completo para instalar, rodar e estender o código da Equipe A. Tudo aqui foi
-testado em Windows 11 + Python 3.14 (Git Bash); em Linux/macOS só muda a ativação
-do ambiente.
+Como instalar, rodar e entender os scripts da Equipe A. Testado em Windows 11 com
+Python 3.14 (Git Bash); em Linux/macOS só muda o comando de ativar o ambiente.
 
 **Sumário**
 
 1. [Instalação](#1-instalação)
 2. [Dados de entrada](#2-dados-de-entrada)
-3. [Configuração de caminhos](#3-configuração-de-caminhos)
-4. [Biblioteca `laminas`](#4-biblioteca-laminas)
-5. [Task 1.2 — scripts](#5-task-12--scripts)
-6. [Anotação pelos especialistas](#6-anotação-pelos-especialistas)
-7. [Modos piloto × especialista](#7-modos-piloto--especialista)
-8. [Resultados e como ler as métricas](#8-resultados-e-como-ler-as-métricas)
-9. [Desempenho e memória](#9-desempenho-e-memória)
-10. [Problemas conhecidos](#10-problemas-conhecidos)
-11. [Como contribuir](#11-como-contribuir)
+3. [Como o código está organizado](#3-como-o-código-está-organizado)
+4. [Task 1.2 — os scripts, na ordem](#4-task-12--os-scripts-na-ordem)
+5. [Anotação pelos especialistas](#5-anotação-pelos-especialistas)
+6. [Piloto × especialista](#6-piloto--especialista)
+7. [Resultados e métricas](#7-resultados-e-métricas)
+8. [Tempo e memória](#8-tempo-e-memória)
+9. [Problemas conhecidos](#9-problemas-conhecidos)
+10. [Regras para novos scripts](#10-regras-para-novos-scripts)
 
 ---
 
@@ -27,246 +25,251 @@ git clone https://github.com/williamjot/ROCKFACE-LCCMAT.git
 cd ROCKFACE-LCCMAT
 python -m venv .venv
 .venv/Scripts/activate            # Linux/macOS: source .venv/bin/activate
-pip install -e .
+pip install -r requirements.txt
 ```
 
-`pip install -e .` instala a biblioteca `laminas` (pasta `src/laminas`) em modo
-editável — alterações no código valem na hora, e qualquer script em qualquer pasta
-pode fazer `import laminas`. Dependências (em `pyproject.toml`): numpy, scipy, pandas,
-pillow, matplotlib, opencv-python-headless, scikit-image, scikit-learn, lightgbm.
+Bibliotecas usadas (todas comuns em ciência de dados): numpy, scipy, pandas, pillow,
+matplotlib, OpenCV, scikit-image, scikit-learn e LightGBM.
 
-Verificação:
+Não é preciso instalar a pasta `laminas/`: cada script tem, no topo, uma linha que
+diz ao Python onde ela está:
 
-```bash
-python -c "import laminas as L; print(L.__version__, len(L.feature_names()), 'atributos')"
+```python
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # para o Python achar a pasta laminas/
 ```
-
-Sem ativar o ambiente, use o Python dele diretamente: `.venv/Scripts/python script.py`.
 
 ## 2. Dados de entrada
 
-Patches exportados pelo `rockface` (`Patching.run`), canal 0 (luz normal/PPL):
+Patches exportados pelo `rockface`, canal 0 (luz normal/PPL):
 
-- nome `patch_y{Y}_x{X}_c0.png`, onde `Y`, `X` são as coordenadas do canto do patch
-  na lâmina (px);
-- RGB 8 bits, 4096 × 4096 px, passo de patching 3800 px (296 px de sobreposição);
-- resina epóxi azul nos poros.
+- nome `patch_y{Y}_x{X}_c0.png` (Y, X = posição do patch na lâmina, em pixels);
+- RGB 8 bits, 4096 × 4096 px; o rockface anda de 3800 em 3800 px, então patches
+  vizinhos se sobrepõem 296 px;
+- poros preenchidos com resina epóxi azul.
 
-Coloque-os em `data/patches/` (git-ignored). Os 18 patches atuais são de uma única
-lâmina. As imagens são muito escuras (média ≈ 20/255 por canal), por isso todo o
-pipeline normaliza a cor antes de calcular atributos.
+Coloque os arquivos em `data/patches/` (essa pasta não vai para o git). Para usar
+outra pasta, mude `PASTA_DADOS` em `laminas/config.py`.
 
-## 3. Configuração de caminhos
+As imagens são muito escuras (média ≈ 20 de 255), por isso os scripts normalizam a
+cor antes de calcular qualquer atributo.
 
-Padrões relativos à raiz do repositório, trocáveis por variáveis de ambiente
-(`src/laminas/config.py`):
+## 3. Como o código está organizado
 
-| Variável | Padrão | Conteúdo |
-|---|---|---|
-| `LAMINAS_DATA` | `data/patches` | patches de entrada |
-| `LAMINAS_ANNOTATIONS` | `annotations` | kit e rótulos dos especialistas |
-| `LAMINAS_RESULTS` | `results` | tabelas de resultados (versionadas) |
-| `LAMINAS_CACHE` | `cache` | intermediários pesados (git-ignored) |
+```
+laminas/                     funções usadas por vários scripts
+├── config.py                pastas e constantes (edite aqui)
+├── imagens.py               ler patches, mudar tamanho, normalizar a cor
+├── baseline.py              limiar de cor do rockface
+├── atributos.py             os 153 atributos por pixel
+├── rotulos.py               ler/salvar rótulos; pseudo-rabiscos do piloto
+├── modelos.py               RF, LightGBM, RF-cor; prever; máscara final
+└── metricas.py              IoU, Dice, F1 de borda, porosidade
 
-Exemplo (outra lâmina em outro disco):
-
-```bash
-LAMINAS_DATA=D:/laminas/lamina_02 python 02_comparar_modelos.py
+tasks/task_1_poros/task_1_2_desempenho_modelos/
+├── 00_explorar_dados.py
+├── 01_gerar_kit_anotacao.py
+├── 02_extrair_amostras.py
+├── 03_validacao_cruzada_piloto.py
+├── 04_avaliar_especialista.py
+└── 05_figuras.py
 ```
 
-## 4. Biblioteca `laminas`
-
-| Módulo | Principais funções | Para quê |
-|---|---|---|
-| `config` | `DATA_DIR`, `STRIDE`, `SIGMAS`, `PORE`, `SOLID` | caminhos e constantes |
-| `io` | `list_patches`, `load_rgb(patch, scale)`, `resize_mask` | leitura e reamostragem |
-| `normalizacao` | `load_or_compute_stats`, `normalize`, `enhance` | cor por lâmina (percentis 0,5–99,5 % de todos os patches) |
-| `baseline` | `rockface_mask`, `rockface_rock_area` | reprodução fiel do limiar HSV do rockface |
-| `atributos` | `compute_features`, `compute_features_tiled`, `feature_names` | 153 atributos por pixel |
-| `rotulos` | `load_labels`, `save_labels`, `bootstrap_scribbles` | rótulos 0/1/2 e pseudo-rabiscos |
-| `metricas` | `seg_metrics`, `boundary_f1`, `porosity` | avaliação |
-| `posprocessamento` | `postprocess`, `disagreement_overlay` | máscara final e figuras |
-
-Exemplo mínimo — segmentar um patch com o baseline e com atributos:
+Nos scripts, a biblioteca é usada assim:
 
 ```python
 import laminas as L
 
-patches = L.list_patches()
-stats = L.load_or_compute_stats(patches, L.CACHE_DIR / "slide_color_stats.npy")
-rgb = L.load_rgb(patches[0], scale=0.5)
-poros_rockface = L.rockface_mask(rgb)
-feats = L.compute_features(L.normalize(rgb, stats))   # (H, W, 153) float32
-print(L.porosity(poros_rockface), feats.shape)
+arquivos = L.listar_patches()
+limites = L.limites_de_cor(arquivos, L.PASTA_CACHE / "limites_de_cor.npy")
+img = L.carregar_rgb(arquivos[0], escala=0.5)
+poros = L.mascara_rockface(img)                         # True = poro
+atributos = L.calcular_atributos(L.normalizar(img, limites))   # (2048, 2048, 153)
+print(L.porosidade(poros), atributos.shape)
 ```
 
-### Banco de atributos (Tabela 3 da Task 1.1)
+### O baseline (`baseline.py`)
 
-- **Cor (9):** R, G, B, H, S, V, L\*, a\*, b\* do pixel normalizado.
-- **Filtros (144):** para cada canal L\*, b\*, S e cada σ ∈ {0,7; 1; 1,6; 3,5; 5; 10} px:
-  gaussiana, magnitude do gradiente, DoG (σ vs 1,6σ), LoG, 2 autovalores da Hessiana,
-  2 autovalores do tensor de estrutura.
-- Nomes no formato `b_gauss_s3.5`, `S_st2_s5.0`, `color_b`, … (`L.feature_names()`).
-- σ é em pixels **da imagem de trabalho**: com `--scale 0.5`, σ = 10 cobre 20 px nativos.
+Reproduz o limiar do rockface (`rockface/masks.py`): desfoque 5×5 → HSV → poro onde
+a matiz está entre 75 e 125 (azul/ciano) e saturação × brilho ≥ 0,1 → abertura 3×3.
+A "área de rocha" do rockface é "algum canal > 5" (ver [problemas conhecidos](#9-problemas-conhecidos)).
 
-### Baseline `rockface`
+### Os 153 atributos (`atributos.py`, Tabela 3 da Task 1.1)
 
-`baseline.rockface_mask` reproduz `rockface/masks.py::generate_pore_mask_array`:
-blur gaussiano 5×5 → HSV → matiz 75–125 (escala OpenCV 0–180) → S·V ≥ 0,1 → abertura
-com elipse 3×3. A "área de rocha" do rockface (`legacy/petrophysical_properties.py`)
-é "algum canal > 5" (`rockface_rock_area`) — ver [problemas conhecidos](#10-problemas-conhecidos).
+- **9 de cor:** R, G, B, H, S, V, L\*, a\*, b\*.
+- **144 de filtros:** 8 filtros × 6 escalas × 3 canais (L\*, b\*, S).
+  - Filtros: gaussiana (média da vizinhança), gradiente (borda), DoG e LoG (manchas
+    e poros pequenos), Hessiana (formas alongadas), tensor de estrutura (textura).
+  - Escalas σ = 0,7; 1; 1,6; 3,5; 5; 10 pixels. Cada filtro "enxerga" cerca de 3σ em
+    volta do pixel.
+- Nomes como `b_gauss_s3.5` (canal b\*, gaussiana, σ = 3,5) e `color_b`.
 
-## 5. Task 1.2 — scripts
+## 4. Task 1.2 — os scripts, na ordem
 
-Pasta `tasks/task_1_poros/task_1_2_desempenho_modelos/`. Rode de dentro dela, na ordem:
+Rode de dentro de `tasks/task_1_poros/task_1_2_desempenho_modelos/`.
 
-### `00_explorar_dados.py`
+| # | Script | O que faz | Tempo* |
+|---|---|---|---|
+| 00 | `00_explorar_dados.py` | tabela por patch: brilho, porosidade do rockface, pixels fora da "rocha" | 2 min |
+| 01 | `01_gerar_kit_anotacao.py` | separa treino/teste e gera o kit para os especialistas | 5 min |
+| 02 | `02_extrair_amostras.py` | calcula os atributos e guarda os pixels rotulados de cada patch | 9 min |
+| 03 | `03_validacao_cruzada_piloto.py` | compara os modelos no piloto | 30 min |
+| 04 | `04_avaliar_especialista.py` | compara os modelos com os rótulos dos especialistas | ~10 min |
+| 05 | `05_figuras.py` | imagens de comparação RF × rockface | 1 min |
+
+\* escala 0,5, 16 threads, sem GPU.
 
 ```bash
 python 00_explorar_dados.py
+python 01_gerar_kit_anotacao.py
+python 02_extrair_amostras.py --escala 0.5
+python 03_validacao_cruzada_piloto.py --escala 0.5 --folds 6
+python 05_figuras.py --escala 0.5
+# quando houver rótulos dos especialistas:
+python 02_extrair_amostras.py --escala 0.5
+python 04_avaliar_especialista.py --escala 0.5
 ```
 
-Por patch: brilho médio por canal, porosidade do rockface (sobre a área toda e sobre
-a "rocha" do rockface) e fração de pixels que o rockface não conta como rocha.
-Saídas: `results/task_1_2/exploracao_patches.csv`, `cache/task_1_2/mosaico.jpg`.
+**Opções:**
 
-### `01_gerar_kit_anotacao.py`
+| Opção | Scripts | Padrão | Significado |
+|---|---|---|---|
+| `--escala` | 02, 03, 04, 05 | 0.5 | tamanho de trabalho: 1.0 = original (4096 px), 0.5 = metade (2048 px); use a mesma em todos |
+| `--folds` | 03 | 6 | em quantos grupos os patches são divididos na validação cruzada |
+| `--semente` | 02, 03, 04 | 42 | semente dos sorteios (mesma semente = mesmo resultado) |
+| `--limite` | 03 | 0 | usar só os N primeiros patches (teste rápido) |
+
+Teste rápido do pipeline inteiro (~5 min):
 
 ```bash
-python 01_gerar_kit_anotacao.py [--n-test 6] [--win 1024] [--seed 42]
+python 02_extrair_amostras.py --escala 0.25
+python 03_validacao_cruzada_piloto.py --escala 0.25 --folds 3 --limite 3
 ```
 
-Sorteia `--n-test` patches de **teste** e escolhe, em cada um, a janela `--win`² com
-mais borda de poro (casos difíceis); os demais são de **treino**. Gera o kit em
-`annotations/` (seção 6). Recusa-se a sobrescrever se `split.json` já estiver marcado
-como corrigido.
+**Os modelos comparados** (`laminas/modelos.py`):
 
-### `02_comparar_modelos.py`
-
-```bash
-python 02_comparar_modelos.py --scale 0.5 --folds 6          # piloto completo (~25 min)
-python 02_comparar_modelos.py --scale 0.25 --folds 3 --limit 3   # teste rápido (~2 min)
-```
-
-| Opção | Padrão | Efeito |
-|---|---|---|
-| `--scale` | 0.5 | reamostragem (1.0 = nativo, 4× mais lento que 0.5) |
-| `--folds` | 6 | folds da validação cruzada agrupada por patch (modo piloto) |
-| `--seed` | 42 | sorteio dos folds e dos pseudo-rabiscos |
-| `--limit` | 0 | usa só os N primeiros patches |
-
-Modelos comparados:
-
-| Nome | Descrição |
+| Nome | O que é |
 |---|---|
-| `rockface` | limiar HSV (baseline, prioridade 0) |
-| `RF` | Random Forest, 200 árvores, `max_features="sqrt"`, `min_samples_leaf=5`, 153 atributos |
-| `LGBM` | LightGBM, 400 árvores, `num_leaves=63`, lr 0,05, mesmos atributos |
-| `RF-cor` | RF só com os 9 atributos de cor (ablação do banco de filtros) |
+| `rockface` | limiar de cor (baseline) |
+| `RF` | Random Forest: 200 árvores, `max_features="sqrt"`, `min_samples_leaf=5`, 153 atributos |
+| `LGBM` | LightGBM: 400 árvores, `num_leaves=63`, taxa de aprendizado 0,05, 153 atributos |
+| `RF-cor` | o mesmo RF, só com os 9 atributos de cor (para ver se os filtros ajudam) |
 
-Pós-processamento dos modelos: τ = 0,5 e abertura com raio 1 px. Avaliação só na
-janela sem sobreposição `[0:3800, 0:3800]` (escalada), como no rockface.
+A probabilidade de poro vira máscara com limiar 0,5 e uma abertura morfológica de
+raio 1 px. Tudo é avaliado na janela sem sobreposição `[0:3800, 0:3800]` de cada patch.
 
-## 6. Anotação pelos especialistas
+## 5. Anotação pelos especialistas
 
-| Pasta em `annotations/` | Conteúdo | Ação |
+O `01_gerar_kit_anotacao.py` cria em `annotations/`:
+
+| Pasta | Conteúdo | O que fazer |
 |---|---|---|
-| `images/` | patch realçado (normalização + gama 0,6), resolução nativa | base para anotar |
+| `images/` | patches realçados (mais claros) | base para anotar |
 | `scribbles/` | vazia | salvar `patch_<nome>_scribbles.png` dos 12 patches de **treino** |
 | `test_masks/` | pré-rótulo do rockface numa janela 1024² de cada patch de **teste** | **corrigir a janela inteira** |
-| `test_windows/` | recorte realçado + pré-rótulo de cada janela | conveniência para revisar |
-| `split.json` | treino/teste, janelas, `test_masks_corrected` | marcar `true` ao terminar |
+| `test_windows/` | recorte de cada janela + pré-rótulo | para revisar com calma |
+| `split.json` | patches de treino/teste e posição das janelas | pôr `"test_masks_corrected": true` ao terminar |
 
-**Formato dos rótulos:** PNG do mesmo tamanho do patch (4096²), indexado com
-0 = sem rótulo, 1 = poro, 2 = sólido; ou RGB(A) pintado em **vermelho** (poro) e
-**verde** (sólido), com o resto preto/transparente.
+**Formato:** PNG com o mesmo tamanho do patch (4096 × 4096), com os números
+0 = sem rótulo, 1 = poro, 2 = sólido (é o que o napari salva). Também vale PNG
+colorido: **vermelho = poro**, **verde = sólido**, resto preto ou transparente.
 
-**Ferramentas:** napari (camada *Labels*, salvar como PNG), GIMP (camada nova sobre
-a imagem realçada, pincel sem suavização), ou ilastik (exportar *Labels*).
+**Programas:**
+
+- **napari** (recomendado): `pip install "napari[all]"`; abra a imagem, crie uma
+  camada *Labels*, pinte com o rótulo 1 (poro) e 2 (sólido) e salve a camada como PNG.
+- **GIMP:** camada nova transparente por cima da imagem; ferramenta **Lápis** (não
+  Pincel, que mistura as cores) em vermelho `#FF0000` e verde `#00C800`; exporte só
+  essa camada.
 
 **Regras:**
-- Rabiscos cobrem de propósito bordas, poros pequenos, bolhas e variação de tingimento;
-  não só o "miolo" fácil. Pixels ambíguos ficam sem rótulo.
-- Nenhum patch de teste recebe rabisco.
-- A janela de teste é densa: todo pixel dela tem de estar revisado (1 ou 2).
-- Decisões pendentes (definir antes de anotar): microporosidade/franja ciano-clara
-  nas bordas dos poros é poro, sólido ou terceira classe? Área mínima de poro `A_min`?
 
-Os rótulos dos especialistas **não** sobem para o git por padrão (ver
-`.gitignore`); combinem com o grupo onde guardá-los.
+- Rabisque bordas, poros pequenos, bolhas e variações de cor, não só o meio dos poros.
+- Na dúvida, não rabisque (pixel sem rótulo não entra no treino).
+- Patches de teste não recebem rabiscos; a janela de teste tem de ser revisada inteira.
+- Antes de começar, o grupo decide: a franja ciano-clara nas bordas dos poros é
+  poro, sólido ou terceira classe? Qual a área mínima de poro?
 
-## 7. Modos piloto × especialista
+Os rótulos não vão para o git por padrão (são derivados das lâminas).
 
-O `02_comparar_modelos.py` escolhe o modo sozinho:
+## 6. Piloto × especialista
 
-| | Piloto | Especialista |
+| | Piloto (`03_…`) | Especialista (`04_…`) |
 |---|---|---|
-| Quando | `split.json` ausente ou `test_masks_corrected: false` | `test_masks_corrected: true` |
-| Treino | pseudo-rabiscos: 20 mil px/classe/patch do miolo (erosão 6 px) das regiões do rockface | só `annotations/scribbles/` dos patches de treino |
-| Teste | validação cruzada agrupada por patch | janelas densas corrigidas dos patches de teste |
-| Referência | o próprio rockface | máscara corrigida (só pixels rotulados) |
-| As métricas medem | **concordância com o rockface** | acerto |
+| Quando | agora, sem rótulos | depois da anotação |
+| Treino | pseudo-rabiscos: 20 mil pixels de cada classe por patch, tirados do miolo das regiões do rockface | rabiscos dos 12 patches de treino |
+| Teste | validação cruzada agrupada por patch | janelas corrigidas dos 6 patches de teste |
+| Comparado com | o próprio rockface | a correção dos especialistas |
+| As métricas medem | **concordância com o rockface** | **acerto** |
 
-No modo piloto o RF herda o viés do limiar; ele serve para validar o pipeline, medir
-custo, ver a importância dos atributos e localizar onde os métodos discordam — não
+No piloto o modelo aprende a imitar o rockface. Ele serve para testar o pipeline,
+medir o tempo, ver quais atributos importam e achar onde os métodos discordam — não
 para escolher o modelo.
 
-## 8. Resultados e como ler as métricas
+## 7. Resultados e métricas
 
-Pasta `results/task_1_2/<modo>_scale<s>/`:
+Em `results/task_1_2/piloto_escala<E>/` (e `especialista_escala<E>/`):
 
 | Arquivo | Conteúdo |
 |---|---|
-| `metrics_per_patch.csv` | uma linha por patch de teste × método |
+| `metrics_per_patch.csv` | uma linha por patch × método |
 | `metrics_summary.csv` | média e desvio padrão entre patches |
-| `rf_feature_importance.csv` | importância de Gini dos 153 atributos (média dos folds) |
-| `run_info.json` | parâmetros, folds, origem dos rótulos, fração de "rocha" do rockface |
+| `rf_feature_importance.csv` | importância de cada atributo no RF |
+| `run_info.json` | parâmetros usados |
 
-Em `cache/task_1_2/<modo>_scale<s>/`: `overlays/*.jpg` (amarelo = ambos poro,
-magenta = só o RF, ciano = só o rockface), `prob/*.npy` (probabilidade do RF),
-`samples/*.npz` (amostras de treino reaproveitadas entre execuções).
+Em `cache/task_1_2/` (não vai para o git): `amostras_escala<E>/` (pixels de treino),
+`piloto_escala<E>/mascaras/` e `piloto_escala<E>/figuras/` (amarelo = poro para os
+dois, magenta = só RF, ciano = só rockface).
 
 | Métrica | Significado |
 |---|---|
-| `iou`, `dice` | sobreposição por pixel com a referência |
-| `precision`, `recall` | poro previsto que é poro / poro de referência encontrado |
-| `boundary_f1` | F1 dos contornos com tolerância de 2 px |
+| `iou`, `dice` | quanto as duas máscaras de poro se sobrepõem (1 = iguais) |
+| `precision` | do que o modelo chamou de poro, quanto é poro |
+| `recall` | dos poros de referência, quanto o modelo encontrou |
+| `boundary_f1` | quanto os contornos coincidem (tolerância de 2 px) |
 | `porosity_total` | % de poro na janela inteira |
-| `porosity_rockface_rock` | % de poro na "rocha" do rockface (definição do rockface) |
+| `porosity_rockface_rock` | % de poro dentro da "rocha" do rockface |
 
-## 9. Desempenho e memória
+## 8. Tempo e memória
 
-Medido numa máquina com 16 threads e 64 GB, sem GPU no pipeline:
+Numa máquina com 16 threads e 64 GB de RAM, escala 0,5 (2048 × 2048):
 
-| Etapa (por patch) | `--scale 0.5` (2048²) |
-|---|---|
-| 153 atributos | ~30 s, ~2,6 GB de RAM |
-| Treino RF (600 mil px) | ~2 min |
-| Treino LGBM | ~10 s |
-| Previsão RF / LGBM | ~12 s / ~10 s |
+- atributos de um patch: ~30 s e ~5 GB de RAM;
+- treino: RF ~2 min, LightGBM ~10 s (600 mil pixels);
+- previsão de um patch: RF ~12 s, LightGBM ~10 s.
 
-Em resolução nativa (`--scale 1.0`) o array de atributos teria ~10 GB por patch; use
-`laminas.compute_features_tiled` (blocos de 1024 px com margem de 48 px).
+Na escala 1,0 os atributos de um patch ocupariam ~10 GB (o dobro no pico); para isso
+será preciso processar a imagem em blocos.
 
-## 10. Problemas conhecidos
+## 9. Problemas conhecidos
 
-- **"Rocha" do rockface subestimada.** Nestes patches escuros, 7–27 % dos pixels
-  (grãos escuros/peloides) têm todos os canais ≤ 5 e saem da área de rocha, o que
-  **infla a porosidade** calculada por `legacy/petrophysical_properties.py`.
-  Reportar a @oi-silva (task de métricas petrofísicas).
-- **Franja ciano-clara nas bordas dos poros.** O rockface deixa de fora uma faixa de
-  ~20–40 px; é preciso decisão dos especialistas (seção 6).
+- **"Rocha" do rockface subestimada:** nestes patches escuros, 7–27 % dos pixels
+  (grãos escuros) têm todos os canais ≤ 5 e saem da área de rocha, o que **aumenta a
+  porosidade** calculada pelo rockface (até 3,5 pontos percentuais por patch).
+- **Franja ciano-clara** nas bordas dos poros: nenhum método a pega; precisa de
+  decisão dos especialistas.
 - **`class_weight="balanced_subsample"`** falhou de forma intermitente no
-  scikit-learn 1.9 / Python 3.14 (`classes should have valid labels that are in y`);
-  usamos `"balanced"`.
-- **Uma só lâmina.** A validação é agrupada por patch; a Task 1.1 pede divisão por
-  lâmina/poço — refazer quando houver mais lâminas.
+  scikit-learn 1.9 / Python 3.14; usamos `"balanced"`.
+- **Falha aleatória em execuções longas (em investigação).** Na máquina de testes, o
+  `03_validacao_cruzada_piloto.py` às vezes para depois de 10–25 min com
+  `operands could not be broadcast together with shapes (1000000,2) (1000000,3)`,
+  `classes should have valid labels that are in y` ou fecha sem mensagem. Aconteceu com
+  Python 3.14 e 3.10, com o código antigo e o novo, dentro e fora do Claude, em pontos
+  diferentes; trechos isolados sempre passam. Suspeitas: condição de corrida na previsão
+  paralela do scikit-learn ou instabilidade da máquina sob carga. Se acontecer, rode de
+  novo; a execução completa do piloto publicada em `results/` terminou sem erro.
+- **Só uma lâmina:** a validação separa por patch; a Task 1.1 pede separar por
+  lâmina/poço, o que deve ser feito quando houver mais lâminas.
 
-## 11. Como contribuir
+## 10. Regras para novos scripts
 
-- Uma task nova = uma pasta em `tasks/`, com `README.md` e scripts numerados
-  (`00_…`, `01_…`) na ordem de execução.
-- Código reutilizável vai para `src/laminas/`; scripts só orquestram.
-- Não versionar imagens das lâminas nem nada derivado delas (máscaras em PNG, figuras
-  com a lâmina); versionar tabelas (CSV/JSON) em `results/`.
-- Commits pequenos, mensagem dizendo o quê e por quê.
+O código deve ser simples o bastante para um aluno de graduação ler e escrever:
+
+- Um script = uma etapa, numerado na ordem de execução (`00_…`, `01_…`), lido de
+  cima para baixo, com uma docstring no topo dizendo o que faz, o que precisa e o que salva.
+- Função só quando ela é usada em mais de um lugar ou deixa o código mais claro;
+  funções usadas por vários scripts vão para `laminas/`.
+- Nomes em português, laços `for` explícitos, sem truques de sintaxe, sem dicas de
+  tipo nem classes quando uma função resolve.
+- Parâmetros no topo do script ou com `argparse` (poucos).
+- Não versionar imagens das lâminas nem nada derivado delas; versionar tabelas
+  (CSV/JSON) em `results/`.

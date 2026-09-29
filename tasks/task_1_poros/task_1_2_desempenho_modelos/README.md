@@ -18,12 +18,20 @@ Implementa a shortlist da Task 1.1 (Seção 5) sobre os 18 patches `patch_y*_x*_
 |---|---|---|
 | `00_explorar_dados.py` | brilho, porosidade do rockface, pixels fora da "rocha" | `results/task_1_2/exploracao_patches.csv` |
 | `01_gerar_kit_anotacao.py` | divisão treino/teste e kit para os especialistas | `annotations/` |
-| `02_comparar_modelos.py` | treina e compara rockface × RF × LGBM × RF-cor | `results/task_1_2/<modo>_scale<s>/` |
+| `02_extrair_amostras.py` | atributos + pixels rotulados de cada patch | `cache/task_1_2/amostras_escala<E>/` |
+| `03_validacao_cruzada_piloto.py` | compara rockface × RF × LGBM × RF-cor no piloto | `results/task_1_2/piloto_escala<E>/` |
+| `04_avaliar_especialista.py` | mesma comparação com os rótulos dos especialistas | `results/task_1_2/especialista_escala<E>/` |
+| `05_figuras.py` | imagens de comparação RF × rockface | `cache/task_1_2/piloto_escala<E>/figuras/` |
 
 ```bash
 python 00_explorar_dados.py
 python 01_gerar_kit_anotacao.py
-python 02_comparar_modelos.py --scale 0.5 --folds 6
+python 02_extrair_amostras.py --escala 0.5
+python 03_validacao_cruzada_piloto.py --escala 0.5 --folds 6
+python 05_figuras.py --escala 0.5
+# quando houver rótulos dos especialistas:
+python 02_extrair_amostras.py --escala 0.5
+python 04_avaliar_especialista.py --escala 0.5
 ```
 
 Opções, formatos e interpretação: [`docs/GUIA_DE_USO.md`](../../../docs/GUIA_DE_USO.md).

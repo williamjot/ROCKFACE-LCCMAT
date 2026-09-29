@@ -1,0 +1,9 @@
+numpy
+scipy
+pandas
+pillow
+matplotlib
+opencv-python-headless
+scikit-image
+scikit-learn
+lightgbm

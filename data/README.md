@@ -14,5 +14,5 @@ data/patches/patch_y22800_x38000_c0.png
   passo de patching 3800 px.
 - Conjunto atual: 18 patches de uma lâmina (≈ 280 MB), obtidos com a equipe.
 
-Para usar outra pasta sem copiar os arquivos: `LAMINAS_DATA=<pasta>` (ver
-`docs/GUIA_DE_USO.md`, seção 3).
+Para usar outra pasta sem copiar os arquivos, mude `PASTA_DADOS` em
+`laminas/config.py`.
