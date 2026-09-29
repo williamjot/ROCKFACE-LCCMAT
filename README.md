@@ -8,7 +8,10 @@ será reaproveitado na segmentação de grãos, fluxo 2).
 - Pacote `rockface` (patching e máscaras por limiar): <https://github.com/LCCMat-UnB/rockface>
 - Equipe A: Larissa Marques Quirino, William de Souza Jota Filho
 
-> 📘 **Guia completo de uso:** [`docs/GUIA_DE_USO.md`](docs/GUIA_DE_USO.md)
+> 🗺️ **Roteiro do projeto** — etapas, anotação passo a passo (napari/GIMP) e teoria de ML:
+> [`docs/ROTEIRO_DO_PROJETO.md`](docs/ROTEIRO_DO_PROJETO.md)
+>
+> 📘 **Guia de uso dos scripts:** [`docs/GUIA_DE_USO.md`](docs/GUIA_DE_USO.md)
 
 ## Andamento
 
@@ -30,23 +33,23 @@ será reaproveitado na segmentação de grãos, fluxo 2).
 ```
 ROCKFACE-LCCMAT/
 ├── README.md                     este arquivo
-├── pyproject.toml                pacote `laminas` + dependências
+├── requirements.txt              bibliotecas necessárias
 ├── docs/
-│   ├── GUIA_DE_USO.md            instalação, scripts, formatos, fluxos — leia primeiro
+│   ├── ROTEIRO_DO_PROJETO.md     etapas, anotação, teoria de ML — leia primeiro
+│   ├── GUIA_DE_USO.md            instalação, scripts, formatos
 │   └── Task_1.1_Revisao_Literatura_Equipe_A.pdf
-├── src/laminas/                  biblioteca compartilhada por todas as tasks
-│   ├── config.py                 caminhos (variáveis de ambiente) e constantes
-│   ├── io.py                     leitura de patches e reamostragem
-│   ├── normalizacao.py           normalização de cor por lâmina
-│   ├── baseline.py               limiar HSV do rockface (baseline)
-│   ├── atributos.py              banco de 153 atributos por pixel
+├── laminas/                      funções usadas por vários scripts
+│   ├── config.py                 pastas e constantes
+│   ├── imagens.py                ler patches, mudar tamanho, normalizar a cor
+│   ├── baseline.py               limiar de cor do rockface (baseline)
+│   ├── atributos.py              os 153 atributos por pixel
 │   ├── rotulos.py                rabiscos, máscaras, pseudo-rótulos
-│   ├── metricas.py               IoU, Dice, F1 de borda, porosidade
-│   └── posprocessamento.py       probabilidade → máscara; sobreposições
+│   ├── modelos.py                RF, LightGBM, RF-cor; previsão
+│   └── metricas.py               IoU, Dice, F1 de borda, porosidade
 ├── tasks/
 │   ├── task_1_poros/
 │   │   ├── task_1_1_revisao_literatura/
-│   │   ├── task_1_2_desempenho_modelos/   scripts 00_…, 01_…, 02_…
+│   │   ├── task_1_2_desempenho_modelos/   scripts 00_… a 05_…
 │   │   ├── task_1_3_selecao_modelo/
 │   │   └── task_1_4_documentacao_paper/
 │   └── task_2_graos/
@@ -65,12 +68,14 @@ git clone https://github.com/williamjot/ROCKFACE-LCCMAT.git
 cd ROCKFACE-LCCMAT
 python -m venv .venv
 .venv/Scripts/activate            # Linux/macOS: source .venv/bin/activate
-pip install -e .
+pip install -r requirements.txt
 # copie os patch_y*_x*_c0.png para data/patches/  (não vêm no git)
 cd tasks/task_1_poros/task_1_2_desempenho_modelos
 python 00_explorar_dados.py
 python 01_gerar_kit_anotacao.py
-python 02_comparar_modelos.py --scale 0.5 --folds 6
+python 02_extrair_amostras.py --escala 0.5
+python 03_validacao_cruzada_piloto.py --escala 0.5 --folds 6
+python 05_figuras.py --escala 0.5
 ```
 
 Detalhes, opções e formatos em [`docs/GUIA_DE_USO.md`](docs/GUIA_DE_USO.md).
